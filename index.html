@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chef-Express</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <script> 
+        var userName = "";
+        const apiUrl = 'http://localhost:3000'; // Ajusta la URL según tu entorno
+
+        async function loginUser() {
+        const username = document.getElementById('login-username').value;
+        const password = document.getElementById('login-password').value;
+
+        const response = await fetch(`${apiUrl}/loginValidation`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, password }),
+        });
+
+
+        const data = await response.json();
+        
+        if(data) {
+        IDusuario = data.ID;
+        userName = data.username
+        alert(`Bienvenido ${userName}`)
+        document.getElementById('auth-section').style.display = 'none';
+        document.getElementById('info-section').style.display = 'block';
+
+        console.log(data); // Puedes manejar la respuesta según tus necesidades
+        }
+        else {
+            alert("Usuario o contraseña incorrectos")
+        }
+    }
+    </script>
+
+<!-- Registro e inicio de sesión -->
+<section id="auth-section">
+    <h1>Chef-Express</h1>
+    <img id="logo" src="Logo.png" alt="Logo.png">
+
+    <h2>Registro e Inicio de Sesión</h2>
+    <form id="register-form">
+        <label for="register-username">Usuario:</label>
+        <input type="text" id="register-username" name="username" required>
+
+        <label for="register-password">Contraseña:</label>
+        <input type="password" id="register-password" name="password" required>
+
+        <label for="register-mail">Correo electrónico:</label>
+        <input type="email" id="register-mail" name="mail" required>
+
+        <button type="button" class="button" onclick="registerUser()">Registrarse</button>
+    </form>
+
+    <form id="login-form">
+        <label for="login-username">Usuario:</label>
+        <input type="text" id="login-username" name="username" required>
+
+        <label for="login-password">Contraseña:</label>
+        <input type="password" id="login-password" name="password" required>
+
+        <button type="button" class="button" onclick="loginUser()">Iniciar Sesión</button>
+    </form>
+</section>
+
+<section id="info-section" style="display: none;">
+    <img id="logo" src="Logo.png" alt="Logo">
+
+
+<!-- Búsqueda de Recetas -->
+<section id="search-section">
+    <h2>Búsqueda de Recetas</h2>
+    <label for="search-input">Buscar Recetas:</label>
+    <input type="text" id="search-input" name="nombre" required>
+    <button type="button" class="button" onclick="searchRecetas()">Buscar</button>
+    <div id="search-results"></div>
+</section>
+
+<!-- Publicar Receta -->
+<section id="publish-section">
+    <h2>Publicar Receta</h2>
+    <form id="publish-form">
+        <label for="publish-nombre">Nombre del Receta:</label>
+        <input type="text" id="publish-nombre" name="nombre" required>
+        <label for="publish-sabor">Sabor:</label>
+        <input type="text" id="publish-sabor" name="sabor" required>
+        <label for="publish-ingredientes">Ingredientes:</label>
+        <textarea id="publish-ingredientes" name="ingredientes" required></textarea>
+        
+
+
+        <label for="publish-pasos">Paso a Paso:</label>
+        <textarea id="publish-pasos" name="pasos" required></textarea>
+
+
+       <button type="button"  onclick="magic(event)" id="ia-btn">
+        <img src="magic.png" alt="IA.png" style="width: 25px; height: 25px;">
+        </button> 
+       <button type="button" class="button" onclick="publicarReceta(event)" id="publicar-btn">Publicar Receta</button>
+
+    </form>
+</section>
+
+<!-- Mis Recetas -->
+<section id="my-books-section">
+    <h2>Mis Recetas</h2>
+    <button type="button" class="button" onclick="getMisRecetas()">Ver Mis Recetas</button>
+    <div id="my-books-results" style="display: none;"></div>
+</section>
+
+
+<script>
+    var IDusuario;
+
+    async function registerUser() {
+        const username = document.getElementById('register-username').value;
+        const password = document.getElementById('register-password').value;
+        const mail = document.getElementById('register-mail').value;
+
+        const response = await fetch(`http://localhost:3000/CreateUser`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, password, mail }),
+        });
+
+        const data = await response.json();
+        console.log(data); // Puedes manejar la respuesta según tus necesidades
+        if (data) {
+            alert ("Usuario creado exitosamente") 
+            document.getElementById('register-username').value = '';
+            document.getElementById('register-password').value = '';
+            document.getElementById('register-mail').value = '';  
+        }
+
+        else {
+        alert("Hubo un error creando el usuario, prueba nuevamente")
+        }
+    }
+
+    async function loginUser() {
+        const username = document.getElementById('login-username').value;
+        const password = document.getElementById('login-password').value;
+
+        const response = await fetch(`${apiUrl}/loginValidation`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, password }),
+        });
+
+
+        const data = await response.json();
+        
+        if(data) {
+        IDusuario = data.ID;
+        userName = data.username
+        alert(`Bienvenido ${userName}`)
+        document.getElementById('auth-section').style.display = 'none';
+        document.getElementById('info-section').style.display = 'block';
+
+        console.log(data); // Puedes manejar la respuesta según tus necesidades
+        }
+        else {
+            alert("Usuario o contraseña incorrectos")
+        }
+    }
+
+    async function searchRecetas() {
+    const palabra = document.getElementById('search-input').value;
+
+    const response = await fetch(`${apiUrl}/SearchRecetas`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ palabra }),
+    });
+
+    const Recetas = await response.json();
+    console.log(Recetas);
+
+    // Limpiar resultados anteriores                                                                                                                                                                                                                                                      
+    document.getElementById('search-results').innerHTML = '';                                   
+                                                                                        
+    // Mostrar cada resultado en forma de tarjeta
+    if (Recetas != null){ 
+        Recetas.forEach(async Receta => {
+            const cardContainer = document.getElementById('search-results');
+
+            // Verificar si el Receta pertenece al usuario actual
+            if (Receta.IDusuario === IDusuario) {
+                // Mostrar un mensaje indicando que el Receta está disponible pero no se puede comprar
+                alert(`La Receta ${Receta.nombrereceta} ha sido publicado por este mismo usuario.`) ;
+                document.getElementById('search-results').innerHTML +=  `<br></br>La Receta <b>${Receta.nombrereceta}</b> ha sido publicado por este mismo usuario.`
+                } else {
+                // Obtener el username del dueño del Receta
+                const ownerResponse = await fetch(`${apiUrl}/GetUserByID`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ IDusuario: Receta.IDusuario }),
+                });
+
+                const ownerData = await ownerResponse.json();
+                const ownerUsername = ownerData.username;
+
+                // Crear una tarjeta para cada Receta con el nombre del dueño
+                const card = document.createElement('div');
+                card.className = 'book-card';
+
+                // Mostrar información del Receta y del dueño
+                card.innerHTML = `
+                    <h3 id="tituloreceta">${Receta.nombrereceta}</h3>
+                    <p>Ingredientes: ${Receta.ingredientes}</p>
+                    <p>Paso a paso: ${Receta.pasoapaso}</p>
+                    <p>Sabor: ${Receta.sabor}</p>
+                    <p>Dueño: @${ownerUsername}</p>
+                `;
+
+                // Agregar la tarjeta al contenedor
+                cardContainer.appendChild(card);
+            }
+        });
+    } else {
+        document.getElementById('search-results').innerHTML = 'No se encontraron resultados';
+        alert('No se encontraron resultados');
+    }
+}
+
+
+    async function publicarReceta() {
+        event.preventDefault(); 
+        const nombrereceta = document.getElementById('publish-nombre').value;
+        const ingredientes = document.getElementById('publish-ingredientes').value;
+        const pasoapaso = document.getElementById('publish-pasos').value;
+        const sabor = document.getElementById('publish-sabor').value;
+
+        const response = await fetch(`${apiUrl}/PublicarReceta`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ nombrereceta, ingredientes, pasoapaso, sabor, IDusuario /* otros campos */ }),
+        });
+
+        const data = await response.json();
+        console.log(data); // Puedes manejar la respuesta según tus necesidades
+
+        if (data) {
+            // Vaciar los campos del formulario
+            document.getElementById('publish-nombre').value = '';
+            document.getElementById('publish-ingredientes').value = '';
+            document.getElementById('publish-pasos').value = '';
+            document.getElementById('publish-sabor').value = '';
+
+            // Mostrar un mensaje de éxito
+            alert('Receta publicado con éxito');
+        }
+
+}
+
+async function magic(event) {
+    event.preventDefault(); 
+    if (document.getElementById('publish-nombre').value === '') {
+        alert('Por favor ingrese el nombre del Receta');
+        return;
+    }
+    else {
+    const plato = document.getElementById('publish-nombre').value;
+    const response = await fetch(`${apiUrl}/CompleteRecipe`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ plato }),
+    });
+    const data = await response.json();
+    // console.log(data); // Puedes manejar la respuesta según tus necesidades
+
+    const ingredientsIndex = data.indexOf("Ingredientes:");
+const instructionsIndex = data.indexOf("Instrucciones:");
+
+const Ingredients = data.substring(ingredientsIndex + "Ingredientes:".length, instructionsIndex).trim();
+const Instructions = data.substring(instructionsIndex + "Instrucciones:".length).trim();
+
+// Displaying the results
+document.getElementById('publish-ingredientes').value = Ingredients;
+document.getElementById('publish-pasos').value = Instructions;
+    
+}
+}
+
+
+async function getMisRecetas() {
+
+    if (document.getElementById('my-books-results').style.display === 'none') {
+        document.getElementById('my-books-results').style.display = 'block';
+        const response = await fetch(`${apiUrl}/GetRecetasUser`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ IDusuario }),
+    });
+
+    const Recetas = await response.json();
+
+    console.log(Recetas);
+
+    // Limpiar resultados anteriores
+    document.getElementById('my-books-results').innerHTML = '';
+
+    if (Recetas != null) {
+    // Mostrar cada resultado en forma de tarjeta
+    Recetas.forEach(Receta => {
+        const cardContainer = document.getElementById('my-books-results');
+
+        // Crear una tarjeta para cada Receta
+        const card = document.createElement('div');
+        card.className = 'book-card';
+
+        // Mostrar información del Receta
+        card.innerHTML = `
+            <h3>${Receta.nombre}</h3>
+            <p>Autor: ${Receta.autor}</p>
+            <p>Descripción: ${Receta.descripcion}</p>
+            <!-- Puedes agregar más detalles según sea necesario -->
+
+            <!-- Por ejemplo, un botón para eliminar el Receta -->
+            <button onclick="eliminarReceta(${Receta.ID})" styles="color: red;    " id="eliminar-btn-${Receta.ID}">Eliminar</button>
+            <button onclick="cargarDatosReceta(${Receta.ID})" styles="color: blue;"id="editar-btn-${Receta.ID}">Editar</button>
+
+        `;
+
+        // Agregar la tarjeta al contenedor
+        cardContainer.appendChild(card);
+    });
+    } else {
+        document.getElementById('my-books-results').innerHTML = 'No se encontraron resultados';
+        alert('No se encontraron resultados');
+    }
+    } else {
+        document.getElementById('my-books-results').style.display = 'none';
+    }
+    
+  
+}
+
+    async function comprarReceta(IDusuario, RecetaID) {
+    const response = await fetch(`${apiUrl}/ComprarReceta`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: RecetaID, IDusuario }),
+    });
+
+    const data = await response.json();
+    console.log(data);
+    if(data){
+        alert("Receta Reservado con exito")
+        searchRecetas()
+    } // Puedes manejar la respuesta según tus necesidades
+}
+
+async function eliminarReceta(RecetaID) {
+    const response = await fetch(`${apiUrl}/DeleteReceta`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: RecetaID }),
+    });
+
+    const data = await response.json();
+    console.log(data); // Puedes manejar la respuesta según tus necesidades
+
+    // Actualizar la lista de Recetas después de eliminar uno
+    alert('Receta eliminado con éxito');
+    getMisRecetas();
+}
+
+async function actualizarReceta(RecetaID) {
+  const IDusuario = IDusuario;
+  const nombre = document.getElementById('publish-nombre').value;
+  const categoria = document.getElementById('publish-ingredientes').value;
+  const autor = document.getElementById('publish-pasos').value;
+  const editorial = document.getElementById('publish-editorial').value;
+  const descripcion = document.getElementById('publish-descripcion').value;
+
+  const response = await fetch(`${apiUrl}/PublicarReceta`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nombre, categoria, autor, editorial, descripcion, IDusuario /* otros campos */ }),
+    });
+
+    const data = await response.json();
+    console.log(data); // Puedes manejar la respuesta según tus necesidades
+
+    if (data) {
+        // Vaciar los campos del formulario
+        document.getElementById('publish-nombre').value = '';
+        document.getElementById('publish-ingredientes').value = '';
+        document.getElementById('publish-pasos').value = '';
+        document.getElementById('publish-editorial').value = '';
+        document.getElementById('publish-descripcion').value = '';
+
+        // Mostrar un mensaje de éxito
+        alert('Receta actualizado con éxito');
+        const response = await fetch(`${apiUrl}/DeleteReceta`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: RecetaID }),
+    });
+    getMisRecetas();
+
+
+        document.getElementById('publicar-btn').textContent = 'Publicar Receta';
+        document.getElementById('publicar-btn').onclick = function() {
+            publicarReceta()
+        };
+
+    }
+    else {
+        alert('Hubo un error actualizando el Receta');
+    }
+}
+
+
+async function cargarDatosReceta(RecetaID) {
+  const response = await fetch(`${apiUrl}/GetRecetasByID`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ id: RecetaID }),
+  });
+
+  const Receta = await response.json();
+
+  // Rellenar los campos de publicar con los datos del Receta
+  document.getElementById('publish-nombre').value = Receta.nombre;
+  document.getElementById('publish-ingredientes').value = Receta.categoria;
+  document.getElementById('publish-autor').value = Receta.autor;
+  document.getElementById('publish-editorial').value = Receta.editorial;
+  document.getElementById('publish-descripcion').value = Receta.descripcion;
+
+    // Cambiar el botón de publicar por el de actualizar
+    document.getElementById('publicar-btn').textContent = 'Actualizar Receta';
+    document.getElementById('publicar-btn').onclick = function() {
+      actualizarReceta(RecetaID);
+    };
+    
+
+}
+
+
+</script>
+
+<button id="logout-button" onclick="cerrarSesion()">Cerrar Sesión</button>
+
+
+<script>
+    function cerrarSesion() {
+        // Restablecer la visibilidad de las secciones de autenticación e información
+        document.getElementById('auth-section').style.display = 'block';
+        document.getElementById('info-section').style.display = 'none';
+
+        // Limpiar los campos de inicio de sesión
+        document.getElementById('login-username').value = '';
+        document.getElementById('login-password').value = '';
+
+        if (document.getElementById('my-books-results').style.display === 'block') {
+        document.getElementById('my-books-results').style.display = 'none';
+        }
+        // Limpiar los campos de publicar Receta
+        document.getElementById('publish-nombre').value = '';
+        document.getElementById('publish-ingredientes').value = '';
+        document.getElementById('publish-autor').value = '';
+        document.getElementById('publish-editorial').value = '';
+        document.getElementById('publish-descripcion').value = '';
+
+        document.getElementById('search-results').innerHTML = '';
+        document.getElementById('search-input').innerHTML = '';
+
+        // Mostrar mensaje de éxito
+        alert('Sesión cerrada con éxito');
+    }
+
+</script>
+
+</body>
+</html>

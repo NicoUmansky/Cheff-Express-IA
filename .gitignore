@@ -1,0 +1,5 @@
+# BEGIN: /c:/Users/nicou/Documents/LangsBookShop/LangsBookShop/.gitignore
+.env
+node_modules
+# END: /c:/Users/nicou/Documents/LangsBookShop/LangsBookShop/.gitignore
+node_modules
