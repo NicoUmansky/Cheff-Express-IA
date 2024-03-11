@@ -9,19 +9,24 @@ datasource db {
 }
 
 model Usuario {
-  ID       Int       @id @default(autoincrement())
-  username String    @unique
+  ID       Int    @id @default(autoincrement())
+  username String @unique
   password String
   mail     String
-
 }
 
-model recetas { 
-   ID       Int       @id @default(autoincrement())
-   nombrereceta String 
-   ingredientes String 
-   pasoapaso String
-   sabor String 
-   IDusuario Int 
+model recetas {
+  ID           Int    @id @default(autoincrement())
+  nombrereceta String
+  ingredientes String
+  pasoapaso    String
+  sabor        String
+  IDusuario    Int
+}
 
-} 
+model Calificaciones {
+  id         Int @id @default(autoincrement())
+  IDusuario  Int
+  IDreceta   Int
+  Valoracion Int
+}

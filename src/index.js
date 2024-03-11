@@ -1,3 +1,7 @@
+
+
+
+
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const express = require("express");
@@ -12,12 +16,7 @@ const Anthropic =require('@anthropic-ai/sdk');
 const anthropic = new Anthropic({
   apiKey: process.env.CLAUDE_KEY, // defaults to process.env["ANTHROPIC_API_KEY"]
 });
-// console.log(process.env.CLAUDE_KEY)
-
-
-// main("Chocotorta")
-
-// Crear api
+// Crea api
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
@@ -27,7 +26,36 @@ app.listen(PORT, () => {
 });
 
 
+app.post('/CompleteRecipe', async (req, res) => {
+  const { plato } = req.body;
+  
+  async function main(name) {
 
+    
+    const nameReceta = name
+    const msg = await anthropic.messages.create({
+      model: "claude-3-opus-20240229",
+      max_tokens: 500,
+      temperature: 0,
+      system: "You are a famous chef from Argentina, you have a great knowledge about everything related to the kitchen and any food. You have a master in cakeshop and bakery. You will receive the name of a recipe it could be either in english or in spanish and then you will respond only and just only with the instructions step by step",
+      messages: [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": nameReceta
+            }
+          ]
+        }
+      ]
+    });
+    // console.log(msg.content[0].text)
+    return msg.content[0].text;
+  }
+  res.json(await main(plato))
+      
+});
 
 app.post('/CreateUser', async (req, res) => {
   const { username, password, mail } = req.body;
@@ -81,36 +109,6 @@ app.post('/PublicarReceta', async (req, res) => {
   }
 });
 
-app.post('/CompleteRecipe', async (req, res) => {
-  const { plato } = req.body;
-  
-  async function main(name) {
-
-    
-    const nameReceta = name
-    const msg = await anthropic.messages.create({
-      model: "claude-3-opus-20240229",
-      max_tokens: 500,
-      temperature: 0,
-      system: "You are a famous chef from Argentina, you have a great knowledge about everything related to the kitchen and any food. You have a master in cakeshop and bakery. You will receive the name of a recipe it could be either in english or in spanish and then you will respond only and just only with the instructions step by step",
-      messages: [
-        {
-          "role": "user",
-          "content": [
-            {
-              "type": "text",
-              "text": nameReceta
-            }
-          ]
-        }
-      ]
-    });
-    // console.log(msg.content[0].text)
-    return msg.content[0].text;
-  }
-  res.json(await main(plato))
-      
-});
 app.post('/SearchRecetas', async (req,res)=>{
   const { palabra } = req.body;
   const recetas = await prisma.recetas.findMany({
@@ -207,27 +205,95 @@ app.post('/DeleteReceta', async (req, res) => {
 
 
 app.post('/EditarReceta', async (req, res) => {
-  const { id, nombrereceta, ingredientes, pasoapaso, sabor, IDusuario } = req.body;
-  try {
+  const { ID, nombrereceta, ingredientes, pasoapaso, sabor } = req.body;
     const updatedreceta = await prisma.recetas.update({
       where: {
-        ID: id
+        ID: ID
       },
       data: {
         nombrereceta: nombrereceta,
         ingredientes: ingredientes,
         pasoapaso: pasoapaso,
         sabor: sabor,
-        IDusuario: IDusuario
       }
     });
-    res.json(updatedreceta);
-  } catch (error) {
-    console.error('Error al actualizar el receta:', error);
-    res.status(500).json({ error: 'Error al actualizar el receta' });
-  }
+    if(updatedreceta){
+      res.json(updatedreceta);
+    }
+    else{
+      res.json(null);
+    }
+  
 });
 // Publica la api para que se pueda acceder
+
+app.post('/GetRecetasID', async (req, res) => {
+  const { ID } = req.body;
+  const receta = await prisma.recetas.findUnique({
+    where: {
+      ID: ID,
+    }
+  });
+  if (receta) {
+    res.json(receta);
+  }
+  else {
+    res.json(null);
+  }
+}); 
+
+app.post('/ValorarReceta', async (req, res) => {
+  const { IDreceta, IDusuario, Valoracion } = req.body;
+    const chequeo = await prisma.Calificaciones.findMany({
+      where:{
+        IDusuario: IDusuario,
+        IDreceta: IDreceta
+      }
+    })
+    if (chequeo.length == 1){
+      res.json(null);
+    }
+    else {
+    const creacion = await prisma.Calificaciones.create({
+      data: {
+        IDreceta: IDreceta,
+        IDusuario: IDusuario,
+        Valoracion: Valoracion
+      }
+    });
+    if (creacion) {
+      res.json(creacion);
+    }
+    else {
+      res.json(null);
+    }
+  }
+  });
+
+  app.post('/GetValoracionReceta', async (req, res) => {
+    const { IDreceta } = req.body;
+    const busqueda = await prisma.Calificaciones.findMany({
+      where: {
+        IDreceta: IDreceta,
+      }
+    });
+    var suma = 0
+    var promedio
+    if (busqueda.length > 0) {
+      busqueda.forEach(element => {
+        suma += element.Valoracion;
+        promedio = suma / busqueda.length
+        promedio = promedio.toFixed(1)
+      });
+      res.json(promedio)
+    
+    }
+    else {
+      res.json(null);
+    }
+  }); 
+
+
 module.exports = app;
 
 app.use(function(req, res, next) {
@@ -236,4 +302,5 @@ app.use(function(req, res, next) {
   res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
+
 
